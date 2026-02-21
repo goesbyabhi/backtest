@@ -7,14 +7,15 @@ export const TradingChart = ({
     markers = [],
     onSeek
 }: {
-    initialData: CandlestickData[],
-    lastCandle: CandlestickData | null,
+    initialData: any[],
+    lastCandle: any | null,
     markers?: any[],
     onSeek?: (timeIndex: number, time?: number) => void
 }) => {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
     const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+    const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
 
     useEffect(() => {
         if (!chartContainerRef.current) return;
@@ -56,6 +57,16 @@ export const TradingChart = ({
             });
             seriesRef.current = candlestickSeries;
 
+            const volumeSeries = chart.addHistogramSeries({
+                color: '#26a69a',
+                priceFormat: { type: 'volume' },
+                priceScaleId: '', // Set as an overlay
+            });
+            volumeSeries.priceScale().applyOptions({
+                scaleMargins: { top: 0.8, bottom: 0 },
+            });
+            volumeSeriesRef.current = volumeSeries;
+
             if (initialData && initialData.length > 0) {
                 // lightweight-charts requires time in UNIX timestamp (seconds)
                 const formattedData = initialData.map((d: any) => ({
@@ -63,6 +74,14 @@ export const TradingChart = ({
                     time: typeof d.time === 'string' ? new Date(d.time).getTime() / 1000 : d.time
                 }));
                 candlestickSeries.setData(formattedData);
+
+                // Format and set volume data
+                const volumeData = initialData.map((d: any) => ({
+                    time: typeof d.time === 'string' ? new Date(d.time).getTime() / 1000 : d.time,
+                    value: d.volume || 0,
+                    color: d.close >= d.open ? '#26a69a' : '#ef5350'
+                }));
+                volumeSeries.setData(volumeData as any);
             }
 
             // Click-to-seek functionality
@@ -100,12 +119,21 @@ export const TradingChart = ({
 
     useEffect(() => {
         if (seriesRef.current && lastCandle) {
+            const timeVal = (typeof lastCandle.time === 'string' ? new Date(lastCandle.time).getTime() / 1000 : lastCandle.time) as any;
             const formattedCandle: any = {
                 ...lastCandle,
-                time: (typeof lastCandle.time === 'string' ? new Date(lastCandle.time).getTime() / 1000 : lastCandle.time) as any
+                time: timeVal
             };
             try {
                 seriesRef.current.update(formattedCandle);
+
+                if (volumeSeriesRef.current && lastCandle.volume !== undefined) {
+                    volumeSeriesRef.current.update({
+                        time: timeVal,
+                        value: lastCandle.volume,
+                        color: lastCandle.close >= lastCandle.open ? '#26a69a' : '#ef5350'
+                    } as any);
+                }
             } catch (err) {
                 console.warn("Could not update candlestick:", err);
             }
