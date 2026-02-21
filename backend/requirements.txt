@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+pandas
+lightweight-charts
+websockets
+\nyfinance
