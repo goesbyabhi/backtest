@@ -3,7 +3,8 @@ import './App.css';
 import { TradingChart } from './components/TradingChart';
 import { StrategyEditor } from './components/StrategyEditor';
 import { StockSearch } from './components/StockSearch';
-import { Play, Pause, PlayCircle } from 'lucide-react';
+import { IndicatorModal, IndicatorConfig } from './components/IndicatorModal';
+import { Play, Pause, PlayCircle, Plus } from 'lucide-react';
 
 const DEFAULT_STRATEGY = `def on_candle(candle, portfolio):
     # Example Strategy: Buy if close > open
@@ -32,13 +33,19 @@ function App() {
   const [tradeCount, setTradeCount] = useState<number>(0);
   const [tradeMarkers, setTradeMarkers] = useState<any[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [activeIndicators, setActiveIndicators] = useState<IndicatorConfig[]>([]);
+  const [isIndicatorModalOpen, setIsIndicatorModalOpen] = useState(false);
 
   useEffect(() => {
-    // Fetch initial data based on selection
+    // Fetch initial data based on selection or indicator changes
     if (symbol?.value) {
       let url = `http://127.0.0.1:8000/api/historical?symbol=${symbol.value}&timeframe=${timeframe}`;
       if (startDate) url += `&start=${startDate}`;
       if (endDate) url += `&end=${endDate}`;
+      if (activeIndicators.length > 0) {
+        // To avoid sending massive urls if they add/remove very fast, we just send id/type/params
+        url += `&indicators=${encodeURIComponent(JSON.stringify(activeIndicators.map(i => ({ id: i.id, type: i.type, params: i.params }))))}`;
+      }
 
       fetch(url)
         .then(res => res.json())
@@ -77,7 +84,7 @@ function App() {
     return () => {
       ws.close();
     };
-  }, [symbol, timeframe, startDate, endDate]);
+  }, [symbol, timeframe, startDate, endDate, activeIndicators]);
 
   const togglePlay = () => {
     if (!wsRef.current) return;
@@ -178,6 +185,12 @@ function App() {
               style={{ width: '130px' }}
             />
           </div>
+          <button
+            onClick={() => setIsIndicatorModalOpen(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#2B2B43', border: 'none', color: '#DDD', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
+          >
+            <Plus size={14} /> Indicators
+          </button>
         </div>
 
         <div className="controls">
@@ -231,6 +244,8 @@ function App() {
               lastCandle={lastCandle}
               markers={tradeMarkers}
               onSeek={handleSeek}
+              activeIndicators={activeIndicators}
+              onRemoveIndicator={(id) => setActiveIndicators(prev => prev.filter(i => i.id !== id))}
             />
           ) : (
             <div className="loading">Loading chart data...</div>
@@ -261,6 +276,13 @@ function App() {
           </div>
         </div>
       </main>
+
+      {isIndicatorModalOpen && (
+        <IndicatorModal
+          onAdd={(config) => setActiveIndicators(prev => [...prev, config])}
+          onClose={() => setIsIndicatorModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

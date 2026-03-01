@@ -29,11 +29,11 @@ def search_symbols(q: str = ''):
 from typing import Optional
 
 @app.get("/api/historical")
-async def get_historical_data(symbol: str = 'RELIANCE.NS', timeframe: str = '1D', start: Optional[str] = None, end: Optional[str] = None):
+async def get_historical_data(symbol: str = 'RELIANCE.NS', timeframe: str = '1D', start: Optional[str] = None, end: Optional[str] = None, indicators: Optional[str] = None):
     """Fetches real historical data using yfinance via DataProvider."""
     # Run synchronous yfinance IO in a threadpool
     loop = asyncio.get_event_loop()
-    data = await loop.run_in_executor(None, DataProvider.get_historical_data, symbol, timeframe, start, end)
+    data = await loop.run_in_executor(None, DataProvider.get_historical_data, symbol, timeframe, start, end, indicators)
     
     active_data_streams['current'] = data
     # Return everything to the frontend so it can calculate ranges, but let frontend slice it initially

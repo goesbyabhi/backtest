@@ -1,1 +1,1 @@
-{"root":["./src/App.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/StockSearch.tsx","./src/components/StrategyEditor.tsx","./src/components/TradingChart.tsx"],"errors":true,"version":"5.9.3"}
+{"root":["./src/App.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/IndicatorModal.tsx","./src/components/StockSearch.tsx","./src/components/StrategyEditor.tsx","./src/components/TradingChart.tsx"],"version":"5.9.3"}
