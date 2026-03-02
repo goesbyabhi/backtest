@@ -4,8 +4,14 @@ import asyncio
 import pandas as pd
 import numpy as np
 import json
+import os
+from dotenv import load_dotenv
+from pydantic import BaseModel
+from google import genai
 from engine import BacktestEngine
 from data_provider import DataProvider
+
+load_dotenv()
 
 app = FastAPI(title="Backtest Engine API")
 
@@ -120,3 +126,62 @@ async def websocket_endpoint(websocket: WebSocket):
                     playing = False # End of replay
     except Exception as e:
         print("WebSocket disconnected")
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    user_message: str
+    chat_history: list[ChatMessage]
+    context: dict
+
+@app.post("/api/chat")
+async def chat_with_llm(req: ChatRequest):
+    try:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return {"error": "GEMINI_API_KEY is not set in backend/.env"}
+            
+        client = genai.Client(api_key=api_key)
+        
+        system_instruction = (
+            "You are an expert quantitative developer and AI Trading Assistant. "
+            "Analyze the user's trading strategy, performance metrics, and current market data, "
+            "and answer their questions clearly and concisely."
+        )
+        
+        ctx_str = f"Strategy Code:\n{req.context.get('strategyCode', 'N/A')}\n\n"
+        ctx_str += f"Symbol: {req.context.get('symbol', 'N/A')}\n"
+        ctx_str += f"PnL: {req.context.get('pnl', 'N/A')}\n"
+        if req.context.get('lastCandle'):
+            ctx_str += f"Latest Candle: {json.dumps(req.context.get('lastCandle'))}\n"
+            
+        contents = []
+        for msg in req.chat_history:
+            contents.append(
+                genai.types.Content(
+                    role="model" if msg.role == "assistant" else "user",
+                    parts=[genai.types.Part.from_text(text=msg.content)]
+                )
+            )
+            
+        augmented_message = f"Context Data:\n{ctx_str}\n\nUser Question:\n{req.user_message}"
+        contents.append(
+            genai.types.Content(
+                role="user",
+                parts=[genai.types.Part.from_text(text=augmented_message)]
+            )
+        )
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=contents,
+            config=genai.types.GenerateContentConfig(
+                system_instruction=system_instruction,
+            ),
+        )
+        
+        return {"response": response.text}
+    except Exception as e:
+        return {"error": str(e)}

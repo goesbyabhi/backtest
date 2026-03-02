@@ -3,4 +3,6 @@ uvicorn
 pandas
 lightweight-charts
 websockets
-\nyfinance
+yfinance
+google-genai
+python-dotenv

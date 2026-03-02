@@ -3,11 +3,12 @@ import { TradingChart } from './components/TradingChart';
 import { StrategyEditor } from './components/StrategyEditor';
 import { StockSearch } from './components/StockSearch';
 import { IndicatorModal, IndicatorConfig } from './components/IndicatorModal';
-import { Play, Pause, PlayCircle, Plus } from 'lucide-react';
+import { Play, Pause, PlayCircle, Plus, Bot } from 'lucide-react';
 import { MarketOverview } from './components/MarketOverview';
 import { PerformanceMetrics } from './components/PerformanceMetrics';
 import { TradeHistory } from './components/TradeHistory';
 import { ActiveIndicatorsList } from './components/ActiveIndicatorsList';
+import { AIAssistant } from './components/AIAssistant';
 
 const DEFAULT_STRATEGY = `def on_candle(candle, portfolio):
     # Example Strategy: Buy if close > open
@@ -37,6 +38,7 @@ function App() {
   const [isRunning, setIsRunning] = useState(false);
   const [activeIndicators, setActiveIndicators] = useState<IndicatorConfig[]>([]);
   const [isIndicatorModalOpen, setIsIndicatorModalOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Resizer states
   const [historyHeight, setHistoryHeight] = useState(250);
@@ -278,6 +280,12 @@ function App() {
           >
             <Plus size={12} /> Indicators
           </button>
+          <button
+            onClick={() => setIsChatOpen(!isChatOpen)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#111', border: '1px solid var(--border)', color: isChatOpen ? 'var(--accent)' : '#DDD', padding: '0.3rem 0.6rem', borderRadius: '0', cursor: 'pointer', fontSize: '11px', textTransform: 'uppercase', fontFamily: 'monospace' }}
+          >
+            <Bot size={12} color={isChatOpen ? 'var(--accent)' : 'currentColor'} /> AI Chat
+          </button>
         </div>
 
         <div className="controls">
@@ -390,6 +398,15 @@ function App() {
           onClose={() => setIsIndicatorModalOpen(false)}
         />
       )}
+
+      <AIAssistant
+        strategyCode={strategyCode}
+        symbol={symbol.value}
+        pnl={pnl}
+        lastCandle={lastCandle}
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+      />
     </div>
   );
 }
