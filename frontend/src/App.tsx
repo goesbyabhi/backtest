@@ -159,7 +159,7 @@ function App() {
   return (
     <div className="app-container">
       <header className="header">
-        <h1>B-Terminal // REPLAY SYSTEM</h1>
+        <h1>BASELINE // REPLAY SYSTEM</h1>
 
         <div className="asset-controls" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', zIndex: 100, flexWrap: 'wrap' }}>
           <StockSearch
