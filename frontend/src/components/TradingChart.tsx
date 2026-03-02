@@ -270,7 +270,14 @@ export const TradingChart = ({
         new Set(indicatorSeriesRef.current.keys()).forEach(key => {
             const isMatch = Array.from(overlayIds).some(baseId => key === baseId || key.startsWith(`${baseId}_`));
             if (!isMatch) {
-                try { mainChart.removeSeries(indicatorSeriesRef.current.get(key)!); } catch (e) { }
+                try {
+                    const item = indicatorSeriesRef.current.get(key);
+                    if (key.endsWith('_plugin') && seriesRef.current && item) {
+                        seriesRef.current.detachPrimitive(item as any);
+                    } else if (item) {
+                        mainChart.removeSeries(item as any);
+                    }
+                } catch (e) { console.warn("Failed to clean up series/plugin", e); }
                 indicatorSeriesRef.current.delete(key);
             }
         });

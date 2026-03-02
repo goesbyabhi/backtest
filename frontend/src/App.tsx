@@ -5,6 +5,10 @@ import { StrategyEditor } from './components/StrategyEditor';
 import { StockSearch } from './components/StockSearch';
 import { IndicatorModal, IndicatorConfig } from './components/IndicatorModal';
 import { Play, Pause, PlayCircle, Plus } from 'lucide-react';
+import { MarketOverview } from './components/MarketOverview';
+import { PerformanceMetrics } from './components/PerformanceMetrics';
+import { TradeHistory } from './components/TradeHistory';
+import { ActiveIndicatorsList } from './components/ActiveIndicatorsList';
 
 const DEFAULT_STRATEGY = `def on_candle(candle, portfolio):
     # Example Strategy: Buy if close > open
@@ -30,7 +34,6 @@ function App() {
   const [endDate, setEndDate] = useState('');
   const [strategyCode, setStrategyCode] = useState(DEFAULT_STRATEGY);
   const [pnl, setPnl] = useState<number | null>(null);
-  const [tradeCount, setTradeCount] = useState<number>(0);
   const [tradeMarkers, setTradeMarkers] = useState<any[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [activeIndicators, setActiveIndicators] = useState<IndicatorConfig[]>([]);
@@ -61,7 +64,6 @@ function App() {
           }
           setTradeMarkers([]); // Clear markers on data change
           setPnl(null);
-          setTradeCount(0);
         })
         .catch(err => console.error("Error fetching historical data:", err));
     }
@@ -124,7 +126,6 @@ function App() {
 
       if (result.success) {
         setPnl(result.pnl);
-        setTradeCount(result.trades ? result.trades.length : 0);
 
         // Format markers for Lightweight Charts
         if (result.trades) {
@@ -152,7 +153,6 @@ function App() {
 
   const clearResults = () => {
     setPnl(null);
-    setTradeCount(0);
     setTradeMarkers([]);
   };
 
@@ -244,53 +244,54 @@ function App() {
       </header>
 
       <main className="main-content">
-        <div className="chart-area">
-          {data.length > 0 ? (
-            <TradingChart
-              initialData={data}
-              lastCandle={lastCandle}
-              markers={tradeMarkers}
-              onSeek={handleSeek}
-              activeIndicators={activeIndicators}
-              onRemoveIndicator={(id) => setActiveIndicators(prev => prev.filter(i => i.id !== id))}
-            />
-          ) : (
-            <div className="loading">Loading chart data...</div>
-          )}
+        <div className="sidebar-left">
+          <MarketOverview symbol={symbol.label} lastCandle={lastCandle} />
+          <ActiveIndicatorsList indicators={activeIndicators} onRemove={(id) => setActiveIndicators(prev => prev.filter(i => i.id !== id))} />
+          {/* Can add more left-side widgets here like Watchlist later */}
         </div>
-        <div className="sidebar">
-          <div className="sidebar-header">
-            <h3>Custom Strategy</h3>
-            <button className="run-btn" onClick={runStrategy} disabled={isRunning} style={{ opacity: isRunning ? 0.7 : 1 }}>
-              <PlayCircle size={16} /> {isRunning ? 'Running...' : 'Run Backtest'}
-            </button>
+
+        <div className="center-area">
+          <div className="chart-area">
+            {data.length > 0 ? (
+              <TradingChart
+                initialData={data}
+                lastCandle={lastCandle}
+                markers={tradeMarkers}
+                onSeek={handleSeek}
+                activeIndicators={activeIndicators}
+                onRemoveIndicator={(id) => setActiveIndicators(prev => prev.filter(i => i.id !== id))}
+              />
+            ) : (
+              <div className="loading">Loading chart data...</div>
+            )}
           </div>
-          <StrategyEditor
-            code={strategyCode}
-            onChange={(val: string | undefined) => setStrategyCode(val || '')}
-          />
-          <div className="results-panel">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4>EXECUTION RESULTS</h4>
-              {(pnl !== null || tradeCount > 0) && (
-                <button
-                  onClick={clearResults}
-                  style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: '0.7rem', padding: '0.2rem 0.5rem', cursor: 'pointer', borderRadius: '4px' }}
-                >
-                  CLEAR
-                </button>
-              )}
+          <div className="trade-history-area">
+            <TradeHistory trades={tradeMarkers.map(t => ({ // reconstruct minimal trade info or from backend response
+              time: t.time,
+              type: t.shape === 'arrowUp' ? 'BUY' : 'SELL',
+              price: parseFloat(t.text.split('₹')[1]),
+              qty: 1 // default for now, backend could send exactly soon
+            }))} />
+          </div>
+        </div>
+
+        <div className="sidebar-right">
+          <div className="widget flex-1" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div className="widget-header">
+              <div>STRATEGY EDITOR</div>
+              <button className="run-btn" onClick={runStrategy} disabled={isRunning} style={{ opacity: isRunning ? 0.7 : 1, padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}>
+                <PlayCircle size={14} /> {isRunning ? 'Running...' : 'Run Backtest'}
+              </button>
             </div>
-            <div className="metric">
-              <span>PnL:</span>
-              <span className="value" style={{ color: pnl && pnl > 0 ? 'var(--up-color)' : (pnl && pnl < 0 ? 'var(--down-color)' : 'var(--text-main)') }}>
-                {pnl !== null ? `₹${pnl.toFixed(2)}` : '--'}
-              </span>
-            </div>
-            <div className="metric">
-              <span>Trades Executed:</span> <span className="value">{tradeCount}</span>
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <StrategyEditor
+                code={strategyCode}
+                onChange={(val: string | undefined) => setStrategyCode(val || '')}
+              />
             </div>
           </div>
+
+          <PerformanceMetrics pnl={pnl} trades={tradeMarkers} onClear={clearResults} />
         </div>
       </main>
 
