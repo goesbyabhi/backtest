@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import './App.css';
 import { TradingChart } from './components/TradingChart';
 import { StrategyEditor } from './components/StrategyEditor';
 import { StockSearch } from './components/StockSearch';
