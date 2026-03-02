@@ -39,6 +39,87 @@ function App() {
   const [activeIndicators, setActiveIndicators] = useState<IndicatorConfig[]>([]);
   const [isIndicatorModalOpen, setIsIndicatorModalOpen] = useState(false);
 
+  // Resizer states
+  const [historyHeight, setHistoryHeight] = useState(250);
+  const [leftWidth, setLeftWidth] = useState(250);
+  const [rightWidth, setRightWidth] = useState(300);
+  const [metricsHeight, setMetricsHeight] = useState(200);
+
+  const startHistoryDrag = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startHeight = historyHeight;
+
+    const handleMouseMove = (mouseEvent: MouseEvent) => {
+      const deltaY = mouseEvent.clientY - startY;
+      setHistoryHeight(Math.max(50, Math.min(800, startHeight - deltaY)));
+    };
+
+    const handleMouseUp = () => {
+      document.body.style.cursor = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.body.style.cursor = 'row-resize';
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const startLeftDrag = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = leftWidth;
+    const handleMouseMove = (mouseEvent: MouseEvent) => {
+      const deltaX = mouseEvent.clientX - startX;
+      setLeftWidth(Math.max(150, Math.min(600, startWidth + deltaX)));
+    };
+    const handleMouseUp = () => {
+      document.body.style.cursor = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+    document.body.style.cursor = 'col-resize';
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const startRightDrag = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = rightWidth;
+    const handleMouseMove = (mouseEvent: MouseEvent) => {
+      const deltaX = startX - mouseEvent.clientX;
+      setRightWidth(Math.max(150, Math.min(600, startWidth + deltaX)));
+    };
+    const handleMouseUp = () => {
+      document.body.style.cursor = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+    document.body.style.cursor = 'col-resize';
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const startMetricsDrag = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startHeight = metricsHeight;
+    const handleMouseMove = (mouseEvent: MouseEvent) => {
+      const deltaY = startY - mouseEvent.clientY;
+      setMetricsHeight(Math.max(100, Math.min(600, startHeight + deltaY)));
+    };
+    const handleMouseUp = () => {
+      document.body.style.cursor = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+    document.body.style.cursor = 'row-resize';
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
   useEffect(() => {
     // Fetch initial data based on selection or indicator changes
     if (symbol?.value) {
@@ -243,12 +324,14 @@ function App() {
         </div>
       </header>
 
-      <main className="main-content">
+      <main className="main-content" style={{ gridTemplateColumns: `${leftWidth}px 4px 1fr 4px ${rightWidth}px` }}>
         <div className="sidebar-left">
           <MarketOverview symbol={symbol.label} lastCandle={lastCandle} />
           <ActiveIndicatorsList indicators={activeIndicators} onRemove={(id) => setActiveIndicators(prev => prev.filter(i => i.id !== id))} />
           {/* Can add more left-side widgets here like Watchlist later */}
         </div>
+
+        <div className="resizer-v" onMouseDown={startLeftDrag} />
 
         <div className="center-area">
           <div className="chart-area">
@@ -265,7 +348,8 @@ function App() {
               <div className="loading">Loading chart data...</div>
             )}
           </div>
-          <div className="trade-history-area">
+          <div className="resizer-h" onMouseDown={startHistoryDrag} />
+          <div className="trade-history-area" style={{ height: `${historyHeight}px`, flexShrink: 0 }}>
             <TradeHistory trades={tradeMarkers.map(t => ({ // reconstruct minimal trade info or from backend response
               time: t.time,
               type: t.shape === 'arrowUp' ? 'BUY' : 'SELL',
@@ -275,9 +359,11 @@ function App() {
           </div>
         </div>
 
+        <div className="resizer-v" onMouseDown={startRightDrag} />
+
         <div className="sidebar-right">
-          <div className="widget flex-1" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div className="widget-header">
+          <div className="widget flex-1" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: '100px' }}>
+            <div className="widget-header" style={{ flexShrink: 0 }}>
               <div>STRATEGY EDITOR</div>
               <button className="run-btn" onClick={runStrategy} disabled={isRunning} style={{ opacity: isRunning ? 0.7 : 1, padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}>
                 <PlayCircle size={14} /> {isRunning ? 'Running...' : 'Run Backtest'}
@@ -291,7 +377,11 @@ function App() {
             </div>
           </div>
 
-          <PerformanceMetrics pnl={pnl} trades={tradeMarkers} onClear={clearResults} />
+          <div className="resizer-h" onMouseDown={startMetricsDrag} />
+
+          <div style={{ height: `${metricsHeight}px`, flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+            <PerformanceMetrics pnl={pnl} trades={tradeMarkers} onClear={clearResults} />
+          </div>
         </div>
       </main>
 

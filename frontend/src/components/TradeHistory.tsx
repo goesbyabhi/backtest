@@ -6,7 +6,7 @@ interface TradeHistoryProps {
 
 export const TradeHistory: React.FC<TradeHistoryProps> = ({ trades }) => {
     return (
-        <div className="widget panel trade-history-widget">
+        <div className="widget panel trade-history-widget" style={{ height: '100%', borderBottom: 'none' }}>
             <div className="widget-header">TRADE HISTORY</div>
             <div className="widget-content table-container">
                 {trades.length === 0 ? (

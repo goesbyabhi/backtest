@@ -130,6 +130,7 @@ body {
   background-color: var(--bg-dark);
   position: relative;
   overflow: hidden;
+  flex: 1;
 }
 
 .trade-history-area {
@@ -140,13 +141,39 @@ body {
   flex-direction: column;
 }
 
+.resizer-h {
+  height: 4px;
+  background-color: var(--border);
+  cursor: row-resize;
+  z-index: 50;
+  transition: background-color 0.2s;
+}
+
+.resizer-h:hover,
+.resizer-h:active {
+  background-color: var(--accent);
+}
+
+.resizer-v {
+  width: 4px;
+  background-color: var(--border);
+  cursor: col-resize;
+  z-index: 50;
+  transition: background-color 0.2s;
+}
+
+.resizer-v:hover,
+.resizer-v:active {
+  background-color: var(--accent);
+}
+
 .main-content {
   display: grid;
-  grid-template-columns: 250px 1fr 300px;
+  /* grid-template-columns: 250px 1fr 300px; */
   grid-template-rows: 1fr;
   flex: 1;
   overflow: hidden;
-  gap: 1px;
+  gap: 0;
   background-color: var(--border);
 }
 
@@ -159,9 +186,9 @@ body {
 }
 
 .center-area {
-  display: grid;
-  grid-template-rows: 1fr 250px;
-  gap: 1px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   background-color: var(--border);
   overflow: hidden;
 }

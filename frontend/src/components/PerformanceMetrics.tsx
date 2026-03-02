@@ -13,7 +13,7 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ pnl, tra
     // For now we'll show basic metrics available.
 
     return (
-        <div className="widget panel flex-col">
+        <div className="widget panel flex-col" style={{ height: '100%', borderBottom: 'none' }}>
             <div className="widget-header">
                 <div>PERFORMANCE METRICS</div>
                 {onClear && (pnl !== null || tradeCount > 0) && (

@@ -41,7 +41,7 @@ export const TradingChart = ({
 
         let chart = createChart(chartContainerRef.current, {
             width: chartContainerRef.current.clientWidth || 800,
-            height: 500,
+            height: chartContainerRef.current.clientHeight || 500,
             layout: {
                 background: { type: ColorType.Solid, color: '#050505' },
                 textColor: '#999',
@@ -159,7 +159,7 @@ export const TradingChart = ({
             rsiChart = createChart(rsiChartContainerRef.current, {
                 width: rsiChartContainerRef.current.clientWidth || 800,
                 height: 0,
-                layout: { background: { type: ColorType.Solid, color: '#050505' }, textColor: '#999' },
+                layout: { background: { type: ColorType.Solid, color: '#050505' }, textColor: '#999', attributionLogo: false },
                 grid: { vertLines: { color: '#222222' }, horzLines: { color: '#222222' } },
                 timeScale: { visible: false }
             });
@@ -209,18 +209,28 @@ export const TradingChart = ({
             });
         }
 
-        const handleResize = () => {
-            if (chartContainerRef.current && chartRef.current) {
-                chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                if (entry.target === chartContainerRef.current && chartRef.current) {
+                    chartRef.current.applyOptions({
+                        width: entry.contentRect.width,
+                        height: entry.contentRect.height
+                    });
+                }
+                if (entry.target === rsiChartContainerRef.current && rsiChartRef.current) {
+                    rsiChartRef.current.applyOptions({
+                        width: entry.contentRect.width,
+                        // Height for RSI managed manually
+                    });
+                }
             }
-            if (rsiChartContainerRef.current && rsiChartRef.current) {
-                rsiChartRef.current.applyOptions({ width: rsiChartContainerRef.current.clientWidth });
-            }
-        };
-        window.addEventListener('resize', handleResize);
+        });
+
+        if (chartContainerRef.current) resizeObserver.observe(chartContainerRef.current);
+        if (rsiChartContainerRef.current) resizeObserver.observe(rsiChartContainerRef.current);
 
         return () => {
-            window.removeEventListener('resize', handleResize);
+            resizeObserver.disconnect();
             if (chartRef.current) chartRef.current.remove();
             if (rsiChartRef.current) rsiChartRef.current.remove();
         };
@@ -488,8 +498,8 @@ export const TradingChart = ({
         // Toggle Sub Pane Visibility. If there's MACD, ATR, or RSI, we show it and expand height
         if (rsiChartContainerRef.current) {
             const hasSub = activeOscillators.length > 0;
-            // E.g. 150px per oscillator
-            const height = hasSub ? activeOscillators.length * 150 : 0;
+            // E.g. 200px per oscillator
+            const height = hasSub ? activeOscillators.length * 200 : 0;
             rsiChartContainerRef.current.style.height = `${height}px`;
             rsiChartContainerRef.current.style.display = hasSub ? 'block' : 'none';
             subChart.applyOptions({ height: height });
@@ -615,8 +625,8 @@ export const TradingChart = ({
     };
 
     return (
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-            <div ref={chartContainerRef} style={{ width: '100%', height: '500px', position: 'relative' }} />
+        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            <div ref={chartContainerRef} style={{ width: '100%', flex: 1, position: 'relative', minHeight: 0 }} />
 
             {/* Main Chart Legend Overlay */}
             {activeIndicators.filter(i => ['EMA', 'VWAP', 'BB', 'DAILY_LEVELS', 'FVG', 'VP'].includes(i.type)).length > 0 && (
