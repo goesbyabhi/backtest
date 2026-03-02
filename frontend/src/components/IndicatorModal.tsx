@@ -13,12 +13,24 @@ interface IndicatorModalProps {
     onClose: () => void;
 }
 
+const INDICATOR_DESCRIPTIONS: Record<IndicatorConfig['type'], string> = {
+    EMA: 'Exponential Moving Average: A trend-following indicator that gives more weight to recent prices. Use it to identify trend direction and potential support/resistance levels. Best used with multiple EMAs (e.g., 9 & 21) for moving average crossovers.',
+    RSI: 'Relative Strength Index: A momentum oscillator that measures the speed and change of price movements. Values above 70 indicate overbought conditions (potential reversal down), while values below 30 indicate oversold conditions (potential reversal up).',
+    VWAP: 'Volume Weighted Average Price: Shows the true average price a stock traded at throughout the day, based on volume and price. Highly respected by institutions. Price above VWAP = Bullish bias. Price below VWAP = Bearish bias.',
+    MACD: 'Moving Average Convergence Divergence: A trend-following momentum indicator showing the relationship between two moving averages. Look for MACD crossing above its signal line for bullish signals, or crossing below for bearish signals.',
+    BB: 'Bollinger Bands: Measures volatility using standard deviations away from a simple moving average. When bands squeeze, expect a breakout. Price touching the upper/lower bands can indicate overextended conditions.',
+    ATR: 'Average True Range: A pure volatility indicator that ignores direction. Shows the average price movement over a given period. Excellent for setting dynamic stop-loss levels and profit targets based on current market noise.',
+    FVG: 'Fair Value Gaps: Areas of price imbalance where the market repriced aggressively, leaving unfilled orders. These areas act as powerful magnets for future price action and serve as precision entry/exit zones.',
+    DAILY_LEVELS: 'Previous Day High & Low: Marks the high and low of the preceding trading session. These are critical psychological boundaries where stops build up. Look for sweeps or rejections at these exact levels.',
+    VP: 'Session Volume Profile: Displays trading activity at specific price levels. The Point of Control (POC) marks the highest volume node. The Value Area (VA) highlights where 70% of volume occurred.\n\n⚠️ PERFORMANCE WARNING: Volume Profile is computationally heavy. For best performance, limit your backtest range to recent data (e.g., 1-3 months max) when using this indicator.',
+};
+
 export const IndicatorModal: React.FC<IndicatorModalProps> = ({ onAdd, onClose }) => {
     const [selectedType, setSelectedType] = useState<IndicatorConfig['type']>('EMA');
 
     // Form States
     const [length, setLength] = useState<number>(20);
-    const [color, setColor] = useState<string>('#f6c23e');
+    const [color, setColor] = useState<string>('#ff8c00');
     const [fastLength, setFastLength] = useState<number>(12);
     const [slowLength, setSlowLength] = useState<number>(26);
     const [signalLength, setSignalLength] = useState<number>(9);
@@ -53,35 +65,36 @@ export const IndicatorModal: React.FC<IndicatorModalProps> = ({ onAdd, onClose }
             display: 'flex', justifyContent: 'center', alignItems: 'center'
         }}>
             <div className="modal-content" style={{
-                background: '#1E1E1E', padding: '1.5rem', borderRadius: '8px',
-                width: '380px', border: '1px solid #2B2B43', color: '#DDD'
+                background: 'var(--bg-panel)', padding: '1.5rem', borderRadius: '0',
+                width: '420px', border: '1px solid var(--border)', color: 'var(--text-main)',
+                fontFamily: 'monospace'
             }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h3 style={{ margin: 0 }}>Add Indicator</h3>
-                    <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#DDD', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--accent)' }}>ADD INDICATOR</h3>
+                    <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                         <X size={20} />
                     </button>
                 </div>
 
                 <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <label>Type</label>
+                    <label className="micro-label">Type</label>
                     <select
                         value={selectedType}
                         onChange={e => {
                             const type = e.target.value as IndicatorConfig['type'];
                             setSelectedType(type);
-                            if (type === 'EMA') { setLength(20); setColor('#f6c23e'); }
+                            if (type === 'EMA') { setLength(20); setColor('#ff8c00'); }
                             if (type === 'RSI') { setLength(14); setColor('#9c27b0'); }
                             if (type === 'VWAP') { setColor('#4e73df'); }
                             if (type === 'MACD') { setFastLength(12); setSlowLength(26); setSignalLength(9); setColor('#2962FF'); }
                             if (type === 'BB') { setLength(20); setMultiplier(2.0); setColor('#2196F3'); }
                             if (type === 'ATR') { setLength(14); setColor('#FF5252'); }
-                            if (type === 'FVG') { setColor('#26a69a'); } // uses opacity usually
+                            if (type === 'FVG') { setColor('#00E676'); } // uses opacity usually
                             if (type === 'DAILY_LEVELS') { setColor('#ff9800'); } // orange
-                            if (type === 'VP') { setColor('#yellow'); setMultiplier(70); } // value area pct
+                            if (type === 'VP') { setColor('#ff8c00'); setMultiplier(70); } // value area pct
                         }}
                         className="dropdown-select"
-                        style={{ width: '100%', padding: '0.5rem', background: '#2B2B43', border: 'none', color: 'white', borderRadius: '4px' }}
+                        style={{ width: '100%', padding: '0.4rem', background: '#111', border: '1px solid var(--border)', color: 'white', borderRadius: '0' }}
                     >
                         <option value="EMA">Moving Average Exponential (EMA)</option>
                         <option value="RSI">Relative Strength Index (RSI)</option>
@@ -95,39 +108,51 @@ export const IndicatorModal: React.FC<IndicatorModalProps> = ({ onAdd, onClose }
                     </select>
                 </div>
 
+                <div style={{
+                    marginBottom: '1.5rem',
+                    padding: '0.75rem',
+                    background: 'rgba(255, 140, 0, 0.05)',
+                    borderLeft: '2px solid var(--accent)',
+                    fontSize: '0.8rem',
+                    lineHeight: '1.4',
+                    color: '#ccc'
+                }}>
+                    <strong>ABOUT:</strong> {INDICATOR_DESCRIPTIONS[selectedType]}
+                </div>
+
                 {(selectedType === 'EMA' || selectedType === 'RSI' || selectedType === 'ATR' || selectedType === 'BB') && (
                     <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label>Length</label>
+                        <label className="micro-label">Length</label>
                         <input
                             type="number"
                             value={length}
                             onChange={e => setLength(parseInt(e.target.value) || 1)}
-                            style={{ padding: '0.5rem', background: '#2B2B43', border: 'none', color: 'white', borderRadius: '4px' }}
+                            style={{ padding: '0.4rem', background: '#111', border: '1px solid var(--border)', color: 'white', borderRadius: '0', fontFamily: 'monospace' }}
                         />
                     </div>
                 )}
 
                 {selectedType === 'BB' && (
                     <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label>StdDev Multiplier</label>
+                        <label className="micro-label">StdDev Multiplier</label>
                         <input
                             type="number"
                             step="0.1"
                             value={multiplier}
                             onChange={e => setMultiplier(parseFloat(e.target.value) || 1)}
-                            style={{ padding: '0.5rem', background: '#2B2B43', border: 'none', color: 'white', borderRadius: '4px' }}
+                            style={{ padding: '0.4rem', background: '#111', border: '1px solid var(--border)', color: 'white', borderRadius: '0', fontFamily: 'monospace' }}
                         />
                     </div>
                 )}
 
                 {selectedType === 'VP' && (
                     <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label>Value Area (%)</label>
+                        <label className="micro-label">Value Area (%)</label>
                         <input
                             type="number"
                             value={multiplier}
                             onChange={e => setMultiplier(parseFloat(e.target.value) || 70)}
-                            style={{ padding: '0.5rem', background: '#2B2B43', border: 'none', color: 'white', borderRadius: '4px' }}
+                            style={{ padding: '0.4rem', background: '#111', border: '1px solid var(--border)', color: 'white', borderRadius: '0', fontFamily: 'monospace' }}
                         />
                     </div>
                 )}
@@ -135,50 +160,50 @@ export const IndicatorModal: React.FC<IndicatorModalProps> = ({ onAdd, onClose }
                 {selectedType === 'MACD' && (
                     <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-                            <label>Fast Length</label>
+                            <label className="micro-label">Fast Length</label>
                             <input
                                 type="number"
                                 value={fastLength}
                                 onChange={e => setFastLength(parseInt(e.target.value) || 1)}
-                                style={{ padding: '0.5rem', background: '#2B2B43', border: 'none', color: 'white', borderRadius: '4px', width: '100%' }}
+                                style={{ padding: '0.4rem', background: '#111', border: '1px solid var(--border)', color: 'white', borderRadius: '0', width: '100%', fontFamily: 'monospace' }}
                             />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-                            <label>Slow Length</label>
+                            <label className="micro-label">Slow Length</label>
                             <input
                                 type="number"
                                 value={slowLength}
                                 onChange={e => setSlowLength(parseInt(e.target.value) || 1)}
-                                style={{ padding: '0.5rem', background: '#2B2B43', border: 'none', color: 'white', borderRadius: '4px', width: '100%' }}
+                                style={{ padding: '0.4rem', background: '#111', border: '1px solid var(--border)', color: 'white', borderRadius: '0', width: '100%', fontFamily: 'monospace' }}
                             />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-                            <label>Signal</label>
+                            <label className="micro-label">Signal</label>
                             <input
                                 type="number"
                                 value={signalLength}
                                 onChange={e => setSignalLength(parseInt(e.target.value) || 1)}
-                                style={{ padding: '0.5rem', background: '#2B2B43', border: 'none', color: 'white', borderRadius: '4px', width: '100%' }}
+                                style={{ padding: '0.4rem', background: '#111', border: '1px solid var(--border)', color: 'white', borderRadius: '0', width: '100%', fontFamily: 'monospace' }}
                             />
                         </div>
                     </div>
                 )}
 
                 <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <label>Base Color</label>
+                    <label className="micro-label">Base Color</label>
                     <input
                         type="color"
                         value={color}
                         onChange={e => setColor(e.target.value)}
-                        style={{ width: '100%', height: '40px', padding: '0', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                        style={{ width: '100%', height: '30px', padding: '0', background: 'transparent', border: '1px solid var(--border)', cursor: 'pointer' }}
                     />
                 </div>
 
                 <button
                     onClick={handleAdd}
                     style={{
-                        width: '100%', padding: '0.8rem', background: '#26a69a',
-                        color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold'
+                        width: '100%', padding: '0.5rem', background: 'var(--accent)',
+                        color: '#000', border: 'none', borderRadius: '0', cursor: 'pointer', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '0.9rem'
                     }}
                 >
                     Add to Chart

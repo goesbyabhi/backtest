@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { createChart, IChartApi, ISeriesApi, ColorType, LineStyle } from 'lightweight-charts';
+import { createChart, IChartApi, ISeriesApi, ColorType, LineStyle, Time } from 'lightweight-charts';
 import { IndicatorConfig } from './IndicatorModal';
 import { X } from 'lucide-react';
+import { VolumeProfilePlugin, VolumeProfileSession } from './plugins/VolumeProfilePlugin';
 
 export const TradingChart = ({
     initialData,
@@ -42,12 +43,13 @@ export const TradingChart = ({
             width: chartContainerRef.current.clientWidth || 800,
             height: 500,
             layout: {
-                background: { type: ColorType.Solid, color: '#1E1E1E' },
-                textColor: '#DDD',
+                background: { type: ColorType.Solid, color: '#050505' },
+                textColor: '#999',
+                attributionLogo: false
             },
             grid: {
-                vertLines: { color: '#2B2B43' },
-                horzLines: { color: '#2B2B43' },
+                vertLines: { color: '#222222', style: LineStyle.Solid },
+                horzLines: { color: '#222222', style: LineStyle.Solid },
             },
             timeScale: {
                 timeVisible: true,
@@ -67,13 +69,13 @@ export const TradingChart = ({
         chartRef.current = chart;
 
         const candlestickSeries = chart.addCandlestickSeries({
-            upColor: '#26a69a', downColor: '#ef5350', borderVisible: false,
-            wickUpColor: '#26a69a', wickDownColor: '#ef5350'
+            upColor: '#00E676', downColor: '#FF1744', borderVisible: false,
+            wickUpColor: '#00E676', wickDownColor: '#FF1744'
         });
         seriesRef.current = candlestickSeries;
 
         const volumeSeries = chart.addHistogramSeries({
-            color: '#26a69a',
+            color: '#00E676',
             priceFormat: { type: 'volume' },
             priceScaleId: '',
         });
@@ -90,7 +92,7 @@ export const TradingChart = ({
             const volumeData = initialData.map((d: any) => ({
                 time: typeof d.time === 'string' ? new Date(d.time).getTime() / 1000 : d.time,
                 value: d.volume || 0,
-                color: d.close >= d.open ? '#26a69a' : '#ef5350'
+                color: d.close >= d.open ? '#00E676' : '#FF1744'
             }));
             volumeSeries.setData(volumeData as any);
         }
@@ -157,8 +159,8 @@ export const TradingChart = ({
             rsiChart = createChart(rsiChartContainerRef.current, {
                 width: rsiChartContainerRef.current.clientWidth || 800,
                 height: 0,
-                layout: { background: { type: ColorType.Solid, color: '#1E1E1E' }, textColor: '#DDD' },
-                grid: { vertLines: { color: '#2B2B43' }, horzLines: { color: '#2B2B43' } },
+                layout: { background: { type: ColorType.Solid, color: '#050505' }, textColor: '#999' },
+                grid: { vertLines: { color: '#222222' }, horzLines: { color: '#222222' } },
                 timeScale: { visible: false }
             });
             rsiChartRef.current = rsiChart;
@@ -239,7 +241,7 @@ export const TradingChart = ({
             const volumeData = initialData.map((d: any) => ({
                 time: typeof d.time === 'string' ? new Date(d.time).getTime() / 1000 : d.time,
                 value: d.volume || 0,
-                color: d.close >= d.open ? '#26a69a' : '#ef5350'
+                color: d.close >= d.open ? '#00E676' : '#FF1744'
             }));
             volumeSeriesRef.current.setData(volumeData as any);
         } else {
@@ -323,30 +325,36 @@ export const TradingChart = ({
                     if (mappedL.length) bbGrp.lower.setData(mappedL as any);
                 }
             } else if (ind.type === 'VP') {
-                let seriesPoc = indicatorSeriesRef.current.get(`${ind.id}_poc`);
-                let seriesVah = indicatorSeriesRef.current.get(`${ind.id}_vah`);
-                let seriesVal = indicatorSeriesRef.current.get(`${ind.id}_val`);
+                let vpPlugin = (indicatorSeriesRef.current as any).get(`${ind.id}_plugin`);
 
-                if (!seriesPoc) {
-                    seriesPoc = mainChart.addLineSeries({ color: 'yellow', lineWidth: 2, lineStyle: LineStyle.Solid, title: 'POC' });
-                    indicatorSeriesRef.current.set(`${ind.id}_poc`, seriesPoc);
-                }
-                if (!seriesVah) {
-                    seriesVah = mainChart.addLineSeries({ color: '#2962FF', lineWidth: 1, lineStyle: LineStyle.Dashed, title: 'VAH' });
-                    indicatorSeriesRef.current.set(`${ind.id}_vah`, seriesVah);
-                }
-                if (!seriesVal) {
-                    seriesVal = mainChart.addLineSeries({ color: '#2962FF', lineWidth: 1, lineStyle: LineStyle.Dashed, title: 'VAL' });
-                    indicatorSeriesRef.current.set(`${ind.id}_val`, seriesVal);
+                if (!vpPlugin && seriesRef.current) {
+                    vpPlugin = new VolumeProfilePlugin([]);
+                    seriesRef.current.attachPrimitive(vpPlugin);
+                    (indicatorSeriesRef.current as any).set(`${ind.id}_plugin`, vpPlugin);
                 }
 
-                if (initialData && initialData.length > 0) {
-                    const dataPoc = initialData.filter(d => d[`${ind.id}_poc`] !== undefined && d[`${ind.id}_poc`] !== null).map(d => ({ time: typeof d.time === 'string' ? new Date(d.time).getTime() / 1000 : d.time, value: d[`${ind.id}_poc`] }));
-                    const dataVah = initialData.filter(d => d[`${ind.id}_vah`] !== undefined && d[`${ind.id}_vah`] !== null).map(d => ({ time: typeof d.time === 'string' ? new Date(d.time).getTime() / 1000 : d.time, value: d[`${ind.id}_vah`] }));
-                    const dataVal = initialData.filter(d => d[`${ind.id}_val`] !== undefined && d[`${ind.id}_val`] !== null).map(d => ({ time: typeof d.time === 'string' ? new Date(d.time).getTime() / 1000 : d.time, value: d[`${ind.id}_val`] }));
-                    if (dataPoc.length) seriesPoc.setData(dataPoc as any);
-                    if (dataVah.length) seriesVah.setData(dataVah as any);
-                    if (dataVal.length) seriesVal.setData(dataVal as any);
+                if (initialData && initialData.length > 0 && vpPlugin) {
+                    const vpSessions: VolumeProfileSession[] = [];
+                    for (const d of initialData) {
+                        const profileStr = d[`${ind.id}_profile`];
+                        if (profileStr) {
+                            try {
+                                const profileData = typeof profileStr === 'string' ? JSON.parse(profileStr) : profileStr;
+                                vpSessions.push({
+                                    time: (typeof d.time === 'string' ? new Date(d.time).getTime() / 1000 : d.time) as Time,
+                                    profile: profileData,
+                                    poc: d[`${ind.id}_poc`] as number,
+                                    vah: d[`${ind.id}_vah`] as number,
+                                    val: d[`${ind.id}_val`] as number
+                                });
+                            } catch (e) {
+                                console.error("Could not parse VP profile", e);
+                            }
+                        }
+                    }
+                    if (vpSessions.length > 0) {
+                        vpPlugin.setData(vpSessions);
+                    }
                 }
             } else if (ind.type === 'DAILY_LEVELS') {
                 let series = indicatorSeriesRef.current.get(`${ind.id}_high`);
@@ -443,7 +451,7 @@ export const TradingChart = ({
                         allMarkers.push({
                             time: tVal,
                             position: 'belowBar',
-                            color: '#26a69a',
+                            color: '#00E676',
                             shape: 'arrowUp',
                             text: 'FVG'
                         });
@@ -451,7 +459,7 @@ export const TradingChart = ({
                         allMarkers.push({
                             time: tVal,
                             position: 'aboveBar',
-                            color: '#ef5350',
+                            color: '#FF1744',
                             shape: 'arrowDown',
                             text: 'FVG'
                         });
@@ -495,7 +503,7 @@ export const TradingChart = ({
                     volumeSeriesRef.current.update({
                         time: timeVal,
                         value: lastCandle.volume,
-                        color: lastCandle.close >= lastCandle.open ? '#26a69a' : '#ef5350'
+                        color: lastCandle.close >= lastCandle.open ? '#00E676' : '#FF1744'
                     } as any);
                 }
 
@@ -607,8 +615,8 @@ export const TradingChart = ({
             {activeIndicators.filter(i => ['EMA', 'VWAP', 'BB', 'DAILY_LEVELS', 'FVG', 'VP'].includes(i.type)).length > 0 && (
                 <div style={{
                     position: 'absolute', top: '10px', left: '10px', zIndex: 10,
-                    background: 'rgba(30,30,30,0.7)', padding: '0.5rem', borderRadius: '4px',
-                    fontSize: '12px', pointerEvents: 'auto'
+                    background: 'none', padding: '0.2rem', borderRadius: '0',
+                    fontSize: '11px', pointerEvents: 'auto', fontFamily: 'monospace'
                 }}>
                     {renderLegendItems(activeIndicators.filter(i => ['EMA', 'VWAP', 'BB', 'DAILY_LEVELS', 'FVG', 'VP'].includes(i.type)))}
                 </div>
@@ -621,16 +629,16 @@ export const TradingChart = ({
                     height: '0px',
                     display: 'none',
                     position: 'relative',
-                    marginTop: '2px',
-                    borderTop: '1px solid #2B2B43'
+                    marginTop: '0px',
+                    borderTop: '2px solid var(--border)'
                 }}
             >
                 {/* Sub Pane Legend Overlay */}
                 {activeIndicators.filter(i => ['RSI', 'ATR', 'MACD'].includes(i.type)).length > 0 && (
                     <div style={{
                         position: 'absolute', top: '10px', left: '10px', zIndex: 10,
-                        background: 'rgba(30,30,30,0.7)', padding: '0.5rem', borderRadius: '4px',
-                        fontSize: '12px', pointerEvents: 'auto'
+                        background: 'none', padding: '0.2rem', borderRadius: '0',
+                        fontSize: '11px', pointerEvents: 'auto', fontFamily: 'monospace'
                     }}>
                         {renderLegendItems(activeIndicators.filter(i => ['RSI', 'ATR', 'MACD'].includes(i.type)))}
                     </div>

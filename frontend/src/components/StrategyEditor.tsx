@@ -8,7 +8,7 @@ interface StrategyEditorProps {
 
 export const StrategyEditor: React.FC<StrategyEditorProps> = ({ code, onChange }) => {
     return (
-        <div style={{ height: '400px', width: '100%', border: '1px solid #333', borderRadius: '4px', overflow: 'hidden' }}>
+        <div style={{ height: '400px', width: '100%', border: '1px solid var(--border)', borderRadius: '0', overflow: 'hidden' }}>
             <Editor
                 height="100%"
                 defaultLanguage="python"

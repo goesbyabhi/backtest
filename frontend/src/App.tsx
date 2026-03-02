@@ -143,18 +143,25 @@ function App() {
         alert(result.error || "Strategy failed to execute.");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Strategy execution error:", err);
       alert("Failed to connect to backend.");
+    } finally {
+      setIsRunning(false);
     }
-    setIsRunning(false);
+  };
+
+  const clearResults = () => {
+    setPnl(null);
+    setTradeCount(0);
+    setTradeMarkers([]);
   };
 
   return (
     <div className="app-container">
       <header className="header">
-        <h1>Backtest Replay Engine</h1>
+        <h1>B-Terminal // REPLAY SYSTEM</h1>
 
-        <div className="asset-controls" style={{ display: 'flex', alignItems: 'center', gap: '1rem', zIndex: 100, flexWrap: 'wrap' }}>
+        <div className="asset-controls" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', zIndex: 100, flexWrap: 'wrap' }}>
           <StockSearch
             value={symbol}
             onChange={(val) => setSymbol(val)}
@@ -165,8 +172,8 @@ function App() {
             <option value="1h">1h</option>
             <option value="1D">1D</option>
           </select>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ color: '#ccc', fontSize: '14px' }}>From:</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <span className="micro-label">From:</span>
             <input
               type="date"
               value={startDate}
@@ -175,8 +182,8 @@ function App() {
               style={{ width: '130px' }}
             />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ color: '#ccc', fontSize: '14px' }}>To:</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <span className="micro-label">To:</span>
             <input
               type="date"
               value={endDate}
@@ -187,9 +194,9 @@ function App() {
           </div>
           <button
             onClick={() => setIsIndicatorModalOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#2B2B43', border: 'none', color: '#DDD', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#111', border: '1px solid var(--border)', color: '#DDD', padding: '0.3rem 0.6rem', borderRadius: '0', cursor: 'pointer', fontSize: '11px', textTransform: 'uppercase', fontFamily: 'monospace' }}
           >
-            <Plus size={14} /> Indicators
+            <Plus size={12} /> Indicators
           </button>
         </div>
 
@@ -226,9 +233,9 @@ function App() {
                     wsRef.current.send(JSON.stringify({ action: 'seek', index: newIndex }));
                   }
                 }}
-                style={{ width: '100%', cursor: 'pointer' }}
+                style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--accent)' }}
               />
-              <span style={{ fontSize: '12px', color: '#888', minWidth: '80px' }}>
+              <span className="value-mono" style={{ color: '#888', minWidth: '80px', fontSize: '12px' }}>
                 {lastCandle ? new Date(lastCandle.time * (lastCandle.time > 1e11 ? 1 : 1000)).toLocaleDateString() : '--'}
               </span>
             </div>
@@ -263,10 +270,20 @@ function App() {
             onChange={(val: string | undefined) => setStrategyCode(val || '')}
           />
           <div className="results-panel">
-            <h4>Results</h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4>EXECUTION RESULTS</h4>
+              {(pnl !== null || tradeCount > 0) && (
+                <button
+                  onClick={clearResults}
+                  style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: '0.7rem', padding: '0.2rem 0.5rem', cursor: 'pointer', borderRadius: '4px' }}
+                >
+                  CLEAR
+                </button>
+              )}
+            </div>
             <div className="metric">
               <span>PnL:</span>
-              <span className="value" style={{ color: pnl && pnl > 0 ? '#26a69a' : (pnl && pnl < 0 ? '#ef5350' : 'white') }}>
+              <span className="value" style={{ color: pnl && pnl > 0 ? 'var(--up-color)' : (pnl && pnl < 0 ? 'var(--down-color)' : 'var(--text-main)') }}>
                 {pnl !== null ? `₹${pnl.toFixed(2)}` : '--'}
               </span>
             </div>

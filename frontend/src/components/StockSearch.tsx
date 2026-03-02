@@ -29,32 +29,46 @@ export const StockSearch = ({ value, onChange }: StockSearchProps) => {
     };
 
     const customStyles = {
-        control: (provided: any) => ({
+        control: (provided: any, state: any) => ({
             ...provided,
-            backgroundColor: '#2a2a2a',
-            borderColor: '#333',
+            backgroundColor: '#111',
+            borderColor: state.isFocused ? 'var(--accent)' : 'var(--border)',
             color: 'white',
             width: '250px',
-            minHeight: '34px',
+            minHeight: '30px',
+            borderRadius: '0',
+            boxShadow: 'none',
+            fontSize: '12px',
+            '&:hover': {
+                borderColor: 'var(--accent)'
+            }
         }),
         menu: (provided: any) => ({
             ...provided,
-            backgroundColor: '#2a2a2a',
+            backgroundColor: '#0a0a0a',
+            border: '1px solid var(--border)',
+            borderRadius: '0',
             color: 'white',
+            marginTop: '0px'
         }),
         option: (provided: any, state: any) => ({
             ...provided,
-            backgroundColor: state.isFocused ? '#3d3d3d' : '#2a2a2a',
-            color: 'white',
+            backgroundColor: state.isFocused ? '#222' : '#0a0a0a',
+            color: state.isFocused ? 'var(--accent)' : 'var(--text-main)',
             cursor: 'pointer',
+            fontSize: '12px',
+            fontFamily: 'monospace'
         }),
         singleValue: (provided: any) => ({
             ...provided,
-            color: 'white',
+            color: 'var(--accent)',
+            fontFamily: 'monospace',
+            fontWeight: 'bold'
         }),
         input: (provided: any) => ({
             ...provided,
             color: 'white',
+            fontFamily: 'monospace'
         })
     };
 

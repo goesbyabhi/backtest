@@ -158,6 +158,108 @@ class DataProvider:
                             # Join back to intraday
                             df = df.merge(daily_highs.rename(f"{ind_id}_prev_high"), on='Date_Only', how='left')
                             df = df.merge(daily_lows.rename(f"{ind_id}_prev_low"), on='Date_Only', how='left')
+                            
+                        elif ind_type == 'VP':
+                            indicator_keys.extend([f"{ind_id}_poc", f"{ind_id}_vah", f"{ind_id}_val", f"{ind_id}_profile"])
+                            value_area_pct = float(params.get('value_area', 70)) / 100.0
+                            
+                            if 'Date_Only' not in df.columns:
+                                df['Date_Only'] = df[date_col].dt.date
+                                
+                            vp_results = []
+                            for date, group in df.groupby('Date_Only'):
+                                session_high = group['High'].max()
+                                session_low = group['Low'].min()
+                                
+                                if pd.isna(session_high) or pd.isna(session_low) or session_high == session_low:
+                                    vp_results.append({
+                                        'Date_Only': date,
+                                        f"{ind_id}_poc": session_high,
+                                        f"{ind_id}_vah": session_high,
+                                        f"{ind_id}_val": session_low,
+                                        f"{ind_id}_profile": "[]"
+                                    })
+                                    continue
+                                    
+                                num_bins = 50
+                                bins = np.linspace(session_low, session_high, num_bins + 1)
+                                bin_centers = (bins[:-1] + bins[1:]) / 2
+                                volume_profile = np.zeros(num_bins)
+                                
+                                for _, row in group.iterrows():
+                                    v = row['Volume']
+                                    if pd.isna(v) or v == 0:
+                                        continue
+                                    h = row['High']
+                                    l = row['Low']
+                                    
+                                    if h == l:
+                                        idx = np.searchsorted(bins, h) - 1
+                                        idx = max(0, min(num_bins - 1, idx))
+                                        volume_profile[idx] += v
+                                    else:
+                                        vol_per_price = v / (h - l)
+                                        # Distribute volume uniformly across overlapping bins
+                                        overlapping_bins = (bins[:-1] < h) & (bins[1:] > l)
+                                        for i, overlaps in enumerate(overlapping_bins):
+                                            if overlaps:
+                                                overlap_low = max(bins[i], l)
+                                                overlap_high = min(bins[i+1], h)
+                                                volume_profile[i] += vol_per_price * (overlap_high - overlap_low)
+                                                
+                                poc_idx = int(np.argmax(volume_profile))
+                                poc_price = bin_centers[poc_idx]
+                                
+                                total_vol = np.sum(volume_profile)
+                                target_vol = total_vol * value_area_pct
+                                
+                                va_vol = volume_profile[poc_idx]
+                                lower_idx = poc_idx
+                                upper_idx = poc_idx
+                                
+                                while va_vol < target_vol and (lower_idx > 0 or upper_idx < num_bins - 1):
+                                    vol_down = volume_profile[lower_idx - 1] if lower_idx > 0 else 0
+                                    vol_up = volume_profile[upper_idx + 1] if upper_idx < num_bins - 1 else 0
+                                    
+                                    if vol_down > vol_up:
+                                        lower_idx -= 1
+                                        va_vol += vol_down
+                                    elif vol_up > vol_down:
+                                        upper_idx += 1
+                                        va_vol += vol_up
+                                    else:
+                                        if lower_idx > 0:
+                                            lower_idx -= 1
+                                            va_vol += volume_profile[lower_idx]
+                                        elif upper_idx < num_bins - 1:
+                                            upper_idx += 1
+                                            va_vol += volume_profile[upper_idx]
+                                
+                                vah_price = bins[upper_idx + 1]
+                                val_price = bins[lower_idx]
+                                
+                                # Serialize full geometric profile
+                                profile_data = []
+                                for i in range(num_bins):
+                                    if volume_profile[i] > 0:
+                                        profile_data.append({
+                                            "price": float(bin_centers[i]),
+                                            "vol": float(volume_profile[i]),
+                                            "low_bound": float(bins[i]),
+                                            "high_bound": float(bins[i+1]),
+                                            "in_va": bool(lower_idx <= i <= upper_idx)
+                                        })
+                                        
+                                vp_results.append({
+                                    'Date_Only': date,
+                                    f"{ind_id}_poc": float(poc_price),
+                                    f"{ind_id}_vah": float(vah_price),
+                                    f"{ind_id}_val": float(val_price),
+                                    f"{ind_id}_profile": json.dumps(profile_data)
+                                })
+                                
+                            vp_df = pd.DataFrame(vp_results)
+                            df = df.merge(vp_df, on='Date_Only', how='left')
                 except Exception as e:
                     print(f"Error parsing/calculating indicators: {e}")
 
@@ -179,7 +281,10 @@ class DataProvider:
                 }
                 for key in indicator_keys:
                     if key in row and row[key] is not None:
-                        record[key] = float(row[key])
+                        if isinstance(row[key], str):
+                            record[key] = row[key]
+                        else:
+                            record[key] = float(row[key])
                     else:
                         record[key] = None
                         
