@@ -276,13 +276,13 @@ function App() {
           </div>
           <button
             onClick={() => setIsIndicatorModalOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#111', border: '1px solid var(--border)', color: '#DDD', padding: '0.3rem 0.6rem', borderRadius: '0', cursor: 'pointer', fontSize: '11px', textTransform: 'uppercase', fontFamily: 'monospace' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#111', border: '1px solid var(--border)', color: '#DDD', height: '30px', padding: '0 0.6rem', boxSizing: 'border-box', borderRadius: '0', cursor: 'pointer', fontSize: '11px', textTransform: 'uppercase', fontFamily: 'monospace' }}
           >
             <Plus size={12} /> Indicators
           </button>
           <button
             onClick={() => setIsChatOpen(!isChatOpen)}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#111', border: '1px solid var(--border)', color: isChatOpen ? 'var(--accent)' : '#DDD', padding: '0.3rem 0.6rem', borderRadius: '0', cursor: 'pointer', fontSize: '11px', textTransform: 'uppercase', fontFamily: 'monospace' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#111', border: '1px solid var(--border)', color: isChatOpen ? 'var(--accent)' : '#DDD', height: '30px', padding: '0 0.6rem', boxSizing: 'border-box', borderRadius: '0', cursor: 'pointer', fontSize: '11px', textTransform: 'uppercase', fontFamily: 'monospace' }}
           >
             <Bot size={12} color={isChatOpen ? 'var(--accent)' : 'currentColor'} /> AI Chat
           </button>

@@ -36,12 +36,30 @@ export const StockSearch = ({ value, onChange }: StockSearchProps) => {
             color: 'white',
             width: '250px',
             minHeight: '30px',
+            height: '30px',
             borderRadius: '0',
             boxShadow: 'none',
             fontSize: '12px',
             '&:hover': {
                 borderColor: 'var(--accent)'
             }
+        }),
+        valueContainer: (provided: any) => ({
+            ...provided,
+            padding: '0 8px',
+            height: '100%',
+        }),
+        indicatorsContainer: (provided: any) => ({
+            ...provided,
+            height: '100%',
+        }),
+        dropdownIndicator: (provided: any) => ({
+            ...provided,
+            padding: '4px',
+        }),
+        clearIndicator: (provided: any) => ({
+            ...provided,
+            padding: '4px',
         }),
         menu: (provided: any) => ({
             ...provided,

@@ -73,7 +73,9 @@ body {
   background-color: var(--accent);
   color: #000;
   border: none;
-  padding: 0.4rem 1rem;
+  height: 30px;
+  padding: 0 1rem;
+  box-sizing: border-box;
   border-radius: 0;
   /* Sharp corners */
   font-size: 0.85rem;
@@ -92,7 +94,9 @@ body {
   align-items: center;
   gap: 0.2rem;
   background-color: #111;
-  padding: 0.25rem;
+  height: 30px;
+  padding: 0 0.25rem;
+  box-sizing: border-box;
   border-radius: 0;
   border: 1px solid var(--border);
 }
@@ -432,7 +436,9 @@ body {
   background-color: #111;
   color: white;
   border: 1px solid var(--border);
-  padding: 0.3rem 0.6rem;
+  height: 30px;
+  padding: 0 0.6rem;
+  box-sizing: border-box;
   border-radius: 0;
   font-size: 0.85rem;
   outline: none;
@@ -442,6 +448,61 @@ body {
 
 .dropdown-select:focus {
   border-color: var(--accent);
+}
+
+/* Date input calendar icon override */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+/* Custom Seek Slider native overrides (sharp rectangular aesthetic) */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  width: 100%;
+  cursor: pointer;
+}
+
+input[type="range"]:focus {
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  cursor: pointer;
+  background: var(--border);
+  border-radius: 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  height: 14px;
+  width: 6px;
+  border-radius: 0;
+  background: var(--accent);
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -5px;
+  /* (trackHeight/2) - (thumbHeight/2) -> (4/2) - (14/2) = 2 - 7 = -5 */
+}
+
+input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 4px;
+  cursor: pointer;
+  background: var(--border);
+  border-radius: 0;
+}
+
+input[type="range"]::-moz-range-thumb {
+  height: 14px;
+  width: 6px;
+  border-radius: 0;
+  background: var(--accent);
+  cursor: pointer;
+  border: none;
 }
 
 .loading {
